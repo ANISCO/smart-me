@@ -1,0 +1,22 @@
+{
+  "name": "Smart Me — مساعدك الذكي",
+  "short_name": "Smart Me",
+  "description": "مساعدك الشخصي الذكي — قاعدة معرفة، خصومات، استوديو فيديو، تسويق، وأكثر",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#03060f",
+  "theme_color": "#03060f",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["productivity", "business", "utilities"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

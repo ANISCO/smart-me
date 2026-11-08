@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background-color: #03060f;
+  color: #e6edf7;
+  font-family: 'Cairo', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
+}
+
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(31, 127, 255, 0.3);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(31, 127, 255, 0.5);
+}
+
+@layer components {
+  .glass {
+    @apply border border-white/5 bg-white/[0.03] backdrop-blur-xl;
+  }
+  .glass-strong {
+    @apply border border-white/10 bg-ink-850/70 backdrop-blur-2xl;
+  }
+  .card-surface {
+    @apply relative overflow-hidden rounded-3xl border border-white/5 bg-gradient-to-b from-ink-800/80 to-ink-900/80 backdrop-blur-xl;
+  }
+  .glow-border {
+    @apply border border-electric-500/30 shadow-glow-sm;
+  }
+  .btn-glow {
+    @apply relative inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-electric-600 to-electric-500 px-5 py-3 text-sm font-semibold text-white shadow-glow transition-all duration-200 hover:shadow-glow active:scale-[0.98] disabled:opacity-50 disabled:shadow-none;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-2.5 text-sm font-medium text-slate-300 transition-all duration-200 hover:border-electric-500/40 hover:bg-electric-500/10 hover:text-white active:scale-[0.98];
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-danger-500/15 px-4 py-2.5 text-sm font-medium text-danger-400 transition-all duration-200 hover:bg-danger-500/25 active:scale-[0.98];
+  }
+  .input-field {
+    @apply w-full rounded-2xl border border-white/10 bg-ink-950/50 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 transition-colors duration-200 focus:border-electric-500/60 focus:outline-none focus:ring-2 focus:ring-electric-500/20;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-medium text-slate-300;
+  }
+  .section-title {
+    @apply text-lg font-semibold text-white;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-medium text-slate-400;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-electric-300 via-electric-400 to-aura-400 bg-clip-text text-transparent;
+  }
+  .safe-top {
+    padding-top: var(--safe-top);
+  }
+  .safe-bottom {
+    padding-bottom: var(--safe-bottom);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .shimmer-bg {
+    background: linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(31,127,255,0.08) 37%, rgba(255,255,255,0.02) 63%);
+    background-size: 200% 100%;
+  }
+}
