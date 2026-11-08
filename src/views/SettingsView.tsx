@@ -7,6 +7,7 @@ import { PROVIDERS, PROVIDER_ORDER, sortedModels } from '../lib/providers';
 import type { AIProvider, ProviderSettings } from '../types';
 
 const KEY = 'smart-me-provider-settings';
+const ACCESS_TOKEN_KEY = 'smart-me-access-token';
 
 const defaultSettings: ProviderSettings = {
   activeProvider: 'gemini',
@@ -18,6 +19,8 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
   const { t, lang, setLang } = useI18n();
   const [settings, setSettings] = useState<ProviderSettings>(() => loadJSON(KEY, defaultSettings));
   const [saved, setSaved] = useState(false);
+  const [accessToken, setAccessToken] = useState(() => loadJSON<string>(ACCESS_TOKEN_KEY, ''));
+  const [tokenSaved, setTokenSaved] = useState(Boolean(loadJSON<string>(ACCESS_TOKEN_KEY, '')));
 
   const update = (patch: Partial<ProviderSettings>) => {
     const next = { ...settings, ...patch };
@@ -81,6 +84,34 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
               </button>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Private API gateway access token */}
+      <div className="mb-5">
+        <h3 className="section-title mb-2">{t('settingsGatewayTitle')}</h3>
+        <div className="card-surface p-4">
+          <p className="mb-3 text-xs leading-relaxed text-slate-400">{t('settingsGatewayDesc')}</p>
+          <label className="label mb-2 block" htmlFor="smart-me-access-token">{t('settingsGatewayToken')}</label>
+          <input
+            id="smart-me-access-token"
+            type="password"
+            autoComplete="off"
+            value={accessToken}
+            onChange={(event) => { setAccessToken(event.target.value); setTokenSaved(false); }}
+            placeholder={t('settingsGatewayPlaceholder')}
+            className="input-field w-full"
+            dir="ltr"
+          />
+          <button
+            type="button"
+            onClick={() => { saveJSON(ACCESS_TOKEN_KEY, accessToken.trim()); setAccessToken(accessToken.trim()); setTokenSaved(Boolean(accessToken.trim())); }}
+            disabled={!accessToken.trim()}
+            className="btn-glow mt-3 w-full"
+          >
+            {tokenSaved ? t('settingsGatewaySaved') : t('save')}
+          </button>
+          <p className="mt-2 text-[11px] text-slate-500">{t('settingsGatewayWarning')}</p>
         </div>
       </div>
 
