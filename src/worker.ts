@@ -20,6 +20,21 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const { pathname } = new URL(request.url);
 
+    if (pathname === "/api/health") {
+      if (request.method !== "GET") {
+        return new Response("Method Not Allowed", {
+          status: 405,
+          headers: { Allow: "GET" },
+        });
+      }
+      return new Response(JSON.stringify({ ok: true, service: "smart-me-api", apiVersion: 1 }), {
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          "Cache-Control": "no-store",
+        },
+      });
+    }
+
     if (pathname === "/api/chat") {
       if (request.method === "OPTIONS") return chatOptions({ request });
       if (request.method === "POST") return chatPost({ request, env });
