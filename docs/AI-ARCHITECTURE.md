@@ -33,6 +33,7 @@ OpenRouter is the broad-coverage option: one key can expose models from multiple
 ## API contract
 
 - `POST /api/chat`: authenticated chat request with `provider`, `model`, and `messages`.
+- `GET /api/health`: non-sensitive Worker runtime health check used to distinguish routing/deployment failures from authentication failures.
 - `GET /api/providers`: authenticated list of providers and whether a server-side key is configured.
 - Client authentication uses `X-Smart-Me-Token`. This is an app access token, not a provider API key.
 - Provider keys never leave the Worker.
