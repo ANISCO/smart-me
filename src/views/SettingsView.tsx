@@ -33,10 +33,26 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
     setCheckingGateway(true);
     setGatewayStatus('Checking secure connection…');
     try {
+      const healthResponse = await fetch('/api/health', { cache: 'no-store' });
+      const healthType = healthResponse.headers.get('content-type') || '';
+      if (!healthResponse.ok || !healthType.includes('application/json')) {
+        setGatewayStatus('Smart Me API is not available in this deployment. The Worker API routes are missing or the deployment is outdated.');
+        return;
+      }
+      const health = await healthResponse.json() as { ok?: boolean };
+      if (!health.ok) {
+        setGatewayStatus('The Smart Me API health check failed.');
+        return;
+      }
       const response = await fetch('/api/providers', {
         headers: { 'X-Smart-Me-Token': token },
         cache: 'no-store',
       });
+      const responseType = response.headers.get('content-type') || '';
+      if (!responseType.includes('application/json')) {
+        setGatewayStatus('The API route returned a web page instead of JSON. This deployment is not routing API requests through the Worker.');
+        return;
+      }
       const payload = await response.json() as {
         providers?: Array<{ id: string; configured: boolean }>;
         error?: string;
