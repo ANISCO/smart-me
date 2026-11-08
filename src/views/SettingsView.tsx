@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Settings as SettingsIcon, Cpu, Globe, Check, AlertCircle, Zap, CircleDollarSign, Info } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext';
 import { SectionHeader } from '../components/SectionHeader';
@@ -21,6 +21,29 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
   const [saved, setSaved] = useState(false);
   const [accessToken, setAccessToken] = useState(() => loadJSON<string>(ACCESS_TOKEN_KEY, ''));
   const [tokenSaved, setTokenSaved] = useState(Boolean(loadJSON<string>(ACCESS_TOKEN_KEY, '')));
+
+  useEffect(() => {
+    const token = loadJSON<string>(ACCESS_TOKEN_KEY, '');
+    if (!token) return;
+    fetch('/api/providers', { headers: { 'X-Smart-Me-Token': token } })
+      .then(async (response) => {
+        if (!response.ok) return;
+        const payload = await response.json() as { providers?: Array<{ id: string; configured: boolean }> };
+        const status = Object.fromEntries((payload.providers ?? []).map((provider) => [provider.id, provider.configured]));
+        setSettings((current) => {
+          const configured = {
+            ...current.configured,
+            gemini: Boolean(status.gemini),
+            groq: Boolean(status.groq),
+            openrouter: Boolean(status.openrouter),
+          };
+          const next = { ...current, configured };
+          saveJSON(KEY, next);
+          return next;
+        });
+      })
+      .catch(() => undefined);
+  }, [tokenSaved]);
 
   const update = (patch: Partial<ProviderSettings>) => {
     const next = { ...settings, ...patch };
