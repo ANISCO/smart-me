@@ -14,7 +14,7 @@ const LANG_OPTIONS = [
 ];
 
 export function TranslateView({ onBack }: { onBack: () => void }) {
-  const { t, dir } = useI18n();
+  const { t } = useI18n();
   const [from, setFrom] = useState('ar');
   const [to, setTo] = useState('en');
   const [text, setText] = useState('');

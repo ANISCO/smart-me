@@ -12,7 +12,7 @@ const KEY = 'mah-ai-files';
 
 export function FilesView({ onBack }: { onBack: () => void }) {
   const { t, lang } = useI18n();
-  const [files, setFiles] = useState<FileItem[]>(() => loadJSON(KEY, sampleFiles));
+  const [files] = useState<FileItem[]>(() => loadJSON(KEY, sampleFiles));
   const [filter, setFilter] = useState<'all' | 'document' | 'image' | 'other'>('all');
   const [search, setSearch] = useState('');
 

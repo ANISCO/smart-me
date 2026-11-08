@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Palette, Building2, Phone, Mail, Globe, Instagram, Facebook, MessageCircle, MapPin, Upload, Check, Info } from 'lucide-react';
+import { Building2, Phone, Mail, Globe, Instagram, Facebook, MessageCircle, MapPin, Upload, Check, Info } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext';
 import { SectionHeader } from '../components/SectionHeader';
 import { loadJSON, saveJSON } from '../lib/storage';

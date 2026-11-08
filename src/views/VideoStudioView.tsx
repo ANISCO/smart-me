@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Video, Plus, Trash2, Image as ImageIcon, Mic, Music, Subtitles, Info, Play, Layers, Sparkles, Clapperboard } from 'lucide-react';
+import { Plus, Trash2, Mic, Music, Subtitles, Info, Play, Sparkles, Clapperboard } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext';
 import { SectionHeader } from '../components/SectionHeader';
 import { EmptyState } from '../components/EmptyState';
 import { Modal } from '../components/Modal';
-import { loadJSON, saveJSON, uid, formatDuration } from '../lib/storage';
+import { loadJSON, saveJSON, uid } from '../lib/storage';
 import type { VideoProject, VideoScene } from '../types';
 import { Video as VsIcon } from 'lucide-react';
 
@@ -35,7 +35,6 @@ export function VideoStudioView({ onBack }: { onBack: () => void }) {
   const { t } = useI18n();
   const [projects, setProjects] = useState<VideoProject[]>(() => loadJSON(KEY, sampleProjects));
   const [createOpen, setCreateOpen] = useState(false);
-  const [editing, setEditing] = useState<VideoProject | null>(null);
   const [form, setForm] = useState({
     name: '', format: '9:16' as VideoProject['format'],
     voiceLang: 'ar' as VideoProject['voiceover']['language'],

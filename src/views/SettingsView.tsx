@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Settings as SettingsIcon, Cpu, Globe, Check, AlertCircle, Zap, CircleDollarSign, Info } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext';
 import { SectionHeader } from '../components/SectionHeader';
@@ -7,6 +7,7 @@ import { PROVIDERS, PROVIDER_ORDER, sortedModels } from '../lib/providers';
 import type { AIProvider, ProviderSettings } from '../types';
 
 const KEY = 'smart-me-provider-settings';
+const ACCESS_TOKEN_KEY = 'smart-me-access-token';
 
 const defaultSettings: ProviderSettings = {
   activeProvider: 'gemini',
@@ -18,6 +19,79 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
   const { t, lang, setLang } = useI18n();
   const [settings, setSettings] = useState<ProviderSettings>(() => loadJSON(KEY, defaultSettings));
   const [saved, setSaved] = useState(false);
+  const [accessToken, setAccessToken] = useState(() => loadJSON<string>(ACCESS_TOKEN_KEY, ''));
+  const [tokenSaved, setTokenSaved] = useState(Boolean(loadJSON<string>(ACCESS_TOKEN_KEY, '')));
+  const [gatewayStatus, setGatewayStatus] = useState('');
+  const [checkingGateway, setCheckingGateway] = useState(false);
+
+  const checkGateway = useCallback(async () => {
+    const token = loadJSON<string>(ACCESS_TOKEN_KEY, '');
+    if (!token) {
+      setGatewayStatus('Save your private gateway access token first.');
+      return;
+    }
+    setCheckingGateway(true);
+    setGatewayStatus('Checking secure connection…');
+    try {
+      const healthResponse = await fetch('/api/health', { cache: 'no-store' });
+      const healthType = healthResponse.headers.get('content-type') || '';
+      if (!healthResponse.ok || !healthType.includes('application/json')) {
+        setGatewayStatus('Smart Me API is not available in this deployment. The Worker API routes are missing or the deployment is outdated.');
+        return;
+      }
+      const health = await healthResponse.json() as { ok?: boolean };
+      if (!health.ok) {
+        setGatewayStatus('The Smart Me API health check failed.');
+        return;
+      }
+      const response = await fetch('/api/providers', {
+        headers: { 'X-Smart-Me-Token': token },
+        cache: 'no-store',
+      });
+      const responseType = response.headers.get('content-type') || '';
+      if (!responseType.includes('application/json')) {
+        setGatewayStatus('The API route returned a web page instead of JSON. This deployment is not routing API requests through the Worker.');
+        return;
+      }
+      const payload = await response.json() as {
+        providers?: Array<{ id: string; configured: boolean }>;
+        error?: string;
+      };
+      if (!response.ok) {
+        const detail = payload.error || `Gateway request failed (${response.status}).`;
+        setGatewayStatus(response.status === 401
+          ? 'Access token rejected. Check that the app token exactly matches the Cloudflare APP_ACCESS_TOKEN secret.'
+          : detail);
+        return;
+      }
+      if (!Array.isArray(payload.providers)) {
+        setGatewayStatus('The gateway responded, but its provider status payload is invalid.');
+        return;
+      }
+      const status = Object.fromEntries(payload.providers.map((provider) => [provider.id, provider.configured]));
+      setSettings((current) => {
+        const configured = {
+          ...current.configured,
+          gemini: Boolean(status.gemini),
+          groq: Boolean(status.groq),
+          openrouter: Boolean(status.openrouter),
+        };
+        const next = { ...current, configured };
+        saveJSON(KEY, next);
+        return next;
+      });
+      const configuredCount = payload.providers.filter((provider) => provider.configured).length;
+      setGatewayStatus(`Secure connection successful. ${configuredCount} provider key(s) configured on the server.`);
+    } catch {
+      setGatewayStatus('Could not reach /api/providers. Check that this deployment includes the Worker API routes.');
+    } finally {
+      setCheckingGateway(false);
+    }
+  }, [tokenSaved]);
+
+  useEffect(() => {
+    if (tokenSaved) void checkGateway();
+  }, [checkGateway, tokenSaved]);
 
   const update = (patch: Partial<ProviderSettings>) => {
     const next = { ...settings, ...patch };
@@ -81,6 +155,38 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
               </button>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Private API gateway access token */}
+      <div className="mb-5">
+        <h3 className="section-title mb-2">{t('settingsGatewayTitle')}</h3>
+        <div className="card-surface p-4">
+          <p className="mb-3 text-xs leading-relaxed text-slate-400">{t('settingsGatewayDesc')}</p>
+          <label className="label mb-2 block" htmlFor="smart-me-access-token">{t('settingsGatewayToken')}</label>
+          <input
+            id="smart-me-access-token"
+            type="password"
+            autoComplete="off"
+            value={accessToken}
+            onChange={(event) => { setAccessToken(event.target.value); setTokenSaved(false); }}
+            placeholder={t('settingsGatewayPlaceholder')}
+            className="input-field w-full"
+            dir="ltr"
+          />
+          <button
+            type="button"
+            onClick={() => { saveJSON(ACCESS_TOKEN_KEY, accessToken.trim()); setAccessToken(accessToken.trim()); setTokenSaved(Boolean(accessToken.trim())); }}
+            disabled={!accessToken.trim()}
+            className="btn-glow mt-3 w-full"
+          >
+            {tokenSaved ? t('settingsGatewaySaved') : t('save')}
+          </button>
+          <button type="button" onClick={() => void checkGateway()} disabled={checkingGateway || !tokenSaved} className="mt-2 w-full rounded-xl border border-white/10 px-3 py-2 text-xs text-slate-300 disabled:opacity-40">
+            {checkingGateway ? 'Checking…' : 'Test secure connection'}
+          </button>
+          {gatewayStatus && <p role="status" aria-live="polite" className="mt-2 break-words text-xs text-slate-300">{gatewayStatus}</p>}
+          <p className="mt-2 text-[11px] text-slate-500">{t('settingsGatewayWarning')}</p>
         </div>
       </div>
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Megaphone, Plus, Trash2, Info, Download, Hash, Image as ImageIcon, Sparkles, Instagram, Facebook, Layers } from 'lucide-react';
+import { Megaphone, Plus, Trash2, Info, Download, Image as ImageIcon, Sparkles, Instagram, Facebook, Layers } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext';
 import { SectionHeader } from '../components/SectionHeader';
 import { EmptyState } from '../components/EmptyState';

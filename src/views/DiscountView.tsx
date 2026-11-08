@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Percent, Plus, Trash2, Info, CheckCircle2, FileDown, AlertTriangle, Tag } from 'lucide-react';
+import { Percent, Plus, Trash2, CheckCircle2, FileDown, AlertTriangle, Tag } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext';
 import { SectionHeader } from '../components/SectionHeader';
 import { EmptyState } from '../components/EmptyState';

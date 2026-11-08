@@ -162,7 +162,7 @@ export function InvoicesView({ onBack }: { onBack: () => void }) {
           <div>
             <label className="label">{t('items')}</label>
             <div className="space-y-2">
-              {items.map((item, idx) => (
+              {items.map((item) => (
                 <div key={item.id} className="flex gap-2">
                   <input
                     value={item.description}
