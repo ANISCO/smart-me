@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Settings as SettingsIcon, Cpu, Globe, Check, AlertCircle, Zap, CircleDollarSign, Info } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext';
 import { SectionHeader } from '../components/SectionHeader';
@@ -24,7 +24,7 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
   const [gatewayStatus, setGatewayStatus] = useState('');
   const [checkingGateway, setCheckingGateway] = useState(false);
 
-  const checkGateway = async () => {
+  const checkGateway = useCallback(async () => {
     const token = loadJSON<string>(ACCESS_TOKEN_KEY, '');
     if (!token) {
       setGatewayStatus('Save your private gateway access token first.');
@@ -71,11 +71,11 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
     } finally {
       setCheckingGateway(false);
     }
-  };
+  }, [tokenSaved]);
 
   useEffect(() => {
     if (tokenSaved) void checkGateway();
-  }, [tokenSaved]);
+  }, [checkGateway, tokenSaved]);
 
   const update = (patch: Partial<ProviderSettings>) => {
     const next = { ...settings, ...patch };
