@@ -21,28 +21,60 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
   const [saved, setSaved] = useState(false);
   const [accessToken, setAccessToken] = useState(() => loadJSON<string>(ACCESS_TOKEN_KEY, ''));
   const [tokenSaved, setTokenSaved] = useState(Boolean(loadJSON<string>(ACCESS_TOKEN_KEY, '')));
+  const [gatewayStatus, setGatewayStatus] = useState('');
+  const [checkingGateway, setCheckingGateway] = useState(false);
+
+  const checkGateway = async () => {
+    const token = loadJSON<string>(ACCESS_TOKEN_KEY, '');
+    if (!token) {
+      setGatewayStatus('Save your private gateway access token first.');
+      return;
+    }
+    setCheckingGateway(true);
+    setGatewayStatus('Checking secure connection…');
+    try {
+      const response = await fetch('/api/providers', {
+        headers: { 'X-Smart-Me-Token': token },
+        cache: 'no-store',
+      });
+      const payload = await response.json() as {
+        providers?: Array<{ id: string; configured: boolean }>;
+        error?: string;
+      };
+      if (!response.ok) {
+        const detail = payload.error || `Gateway request failed (${response.status}).`;
+        setGatewayStatus(response.status === 401
+          ? 'Access token rejected. Check that the app token exactly matches the Cloudflare APP_ACCESS_TOKEN secret.'
+          : detail);
+        return;
+      }
+      if (!Array.isArray(payload.providers)) {
+        setGatewayStatus('The gateway responded, but its provider status payload is invalid.');
+        return;
+      }
+      const status = Object.fromEntries(payload.providers.map((provider) => [provider.id, provider.configured]));
+      setSettings((current) => {
+        const configured = {
+          ...current.configured,
+          gemini: Boolean(status.gemini),
+          groq: Boolean(status.groq),
+          openrouter: Boolean(status.openrouter),
+        };
+        const next = { ...current, configured };
+        saveJSON(KEY, next);
+        return next;
+      });
+      const configuredCount = payload.providers.filter((provider) => provider.configured).length;
+      setGatewayStatus(`Secure connection successful. ${configuredCount} provider key(s) configured on the server.`);
+    } catch {
+      setGatewayStatus('Could not reach /api/providers. Check that this deployment includes the Worker API routes.');
+    } finally {
+      setCheckingGateway(false);
+    }
+  };
 
   useEffect(() => {
-    const token = loadJSON<string>(ACCESS_TOKEN_KEY, '');
-    if (!token) return;
-    fetch('/api/providers', { headers: { 'X-Smart-Me-Token': token } })
-      .then(async (response) => {
-        if (!response.ok) return;
-        const payload = await response.json() as { providers?: Array<{ id: string; configured: boolean }> };
-        const status = Object.fromEntries((payload.providers ?? []).map((provider) => [provider.id, provider.configured]));
-        setSettings((current) => {
-          const configured = {
-            ...current.configured,
-            gemini: Boolean(status.gemini),
-            groq: Boolean(status.groq),
-            openrouter: Boolean(status.openrouter),
-          };
-          const next = { ...current, configured };
-          saveJSON(KEY, next);
-          return next;
-        });
-      })
-      .catch(() => undefined);
+    if (tokenSaved) void checkGateway();
   }, [tokenSaved]);
 
   const update = (patch: Partial<ProviderSettings>) => {
@@ -134,6 +166,10 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
           >
             {tokenSaved ? t('settingsGatewaySaved') : t('save')}
           </button>
+          <button type="button" onClick={() => void checkGateway()} disabled={checkingGateway || !tokenSaved} className="mt-2 w-full rounded-xl border border-white/10 px-3 py-2 text-xs text-slate-300 disabled:opacity-40">
+            {checkingGateway ? 'Checking…' : 'Test secure connection'}
+          </button>
+          {gatewayStatus && <p role="status" aria-live="polite" className="mt-2 break-words text-xs text-slate-300">{gatewayStatus}</p>}
           <p className="mt-2 text-[11px] text-slate-500">{t('settingsGatewayWarning')}</p>
         </div>
       </div>
