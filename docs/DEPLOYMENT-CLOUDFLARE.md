@@ -1,31 +1,28 @@
-# Deploy Smart Me on Cloudflare Pages
+# Deploy Smart Me on Cloudflare Workers
 
-This repository is a Vite app with Cloudflare Pages Functions under `functions/`.
+The existing Cloudflare project is a **Worker** (not a Pages project). This repository uses Workers Static Assets plus a Worker entry point to serve the Vite PWA and handle the AI API routes.
 
-## 1. Create the Pages project
+## Build configuration
 
-1. Sign in to Cloudflare.
-2. Open **Workers & Pages → Create → Pages → Connect to Git**.
-3. Select `ANISCO/smart-me`.
-4. For the first deployment, select branch `feat/ai-agent-foundation` (after the pull request is reviewed) or the branch you intentionally want to deploy.
-5. Set:
-   - Framework preset: **Vite**
-   - Build command: `npm run build`
-   - Build output directory: `dist`
-   - Root directory: `/`
-6. Deploy.
+Keep the Cloudflare Worker name as `smart-me` so it matches `wrangler.jsonc`.
 
-Cloudflare Pages automatically detects the `functions/` directory at the repository root. Do not put it inside `src/` or `dist/`.
+- Git repository: `ANISCO/smart-me`
+- Production branch: `main`
+- Build command: `npm run build`
+- Deploy command: `npx wrangler deploy`
+- Root directory: `/`
 
-## 2. Add secrets
+The Wrangler config uses `dist` as the static asset directory, routes `/api/*` through `src/worker.ts`, and serves the React SPA for navigation requests.
 
-In **Workers & Pages → your Pages project → Settings → Variables and Secrets**, add encrypted secrets for the Production environment:
+## Add encrypted secrets
 
+In **Workers & Pages → smart-me → Settings → Variables and Secrets**, add these as **encrypted secrets** (not plain-text variables):
+
+Required:
 - `APP_ACCESS_TOKEN` — generate a long random value (at least 32 bytes).
-- At least one provider key, for example `OPENROUTER_API_KEY` or `GEMINI_API_KEY`.
+- At least one provider key, for example `GEMINI_API_KEY` or `OPENROUTER_API_KEY`.
 
-Optional provider secrets:
-
+Optional:
 - `GROQ_API_KEY`
 - `DEEPSEEK_API_KEY`
 - `MISTRAL_API_KEY`
@@ -35,29 +32,27 @@ Optional provider secrets:
 - `OPENAI_API_KEY`
 - `SAMBANOVA_API_KEY`
 
-Save and trigger a new deployment after changing secrets.
+Do not paste provider keys into the app, GitHub, source files, or this chat. After adding or changing secrets, deploy a new Worker version.
 
-## 3. Protect the app
+## Protect the personal app
 
-For a personal deployment, enable Cloudflare Access for the Pages hostname and allow only your own email identity. Keep the app access token as a second gate. Do not rely on an obscure URL as authentication.
+Use **Cloudflare Access** to restrict the `workers.dev` hostname to your own identity. The app access token is a second gate, not a substitute for Access. Do not share the access token.
 
-## 4. Verify the gateway
+## Configure the app
 
-After deployment, test the API from the browser developer console or a REST client:
+After the new Worker deployment is active:
 
-```http
-GET /api/providers
-X-Smart-Me-Token: YOUR_APP_ACCESS_TOKEN
-```
+1. Open Smart Me → Settings.
+2. Paste the `APP_ACCESS_TOKEN` value into the gateway access-token field and save.
+3. Select a provider and a model that is currently available for that provider.
+4. Open Chat and send a short test message.
 
-Then send a small `POST /api/chat` request with a provider, a valid model ID for that provider, and one user message.
+## API behavior
 
-## 5. Local development
+- `GET /api/providers` with `X-Smart-Me-Token` returns configured-provider status.
+- `POST /api/chat` with `X-Smart-Me-Token` sends the selected model request to the provider.
+- The current gateway is non-streaming and does not yet execute agent tools.
 
-The frontend can run with `npm run dev`, but Vite does not execute Cloudflare Pages Functions. To test the API locally, install Wrangler as a development dependency and use `wrangler pages dev` after setting local secrets in an ignored `.dev.vars` file. Never commit `.dev.vars`.
+## Local validation
 
-## Important
-
-- The gateway code is not deployed merely because it exists on GitHub; the Pages project must be created and deployed.
-- Model IDs, free quotas and provider pricing change. Verify them in the provider's current dashboard before selecting a production model.
-- The current gateway returns non-streaming text. Streaming, tools/function calling and agent execution are later milestones.
+Run `npm ci`, `npm run typecheck`, `npm run lint`, and `npm run build`. For Worker runtime testing, use Wrangler with local secrets in an ignored `.dev.vars` file. Never commit `.dev.vars`.
